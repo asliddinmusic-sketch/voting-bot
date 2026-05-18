@@ -263,7 +263,34 @@ async def cmd_reset(message: Message):
     db.reset_votes()
     await message.answer("✅ Barcha ovozlar o'chirildi.")
 
-
+@dp.message(Command("sendpoll"))
+async def cmd_sendpoll(message: Message):
+    if message.from_user.id not in ADMIN_IDS:
+        return
+    
+    channel = "@YIA_Shofirkon_tumani"
+    
+    buttons = []
+    for c in CANDIDATES:
+        buttons.append([
+            InlineKeyboardButton(
+                text=f"{c['name']} | {c['mahalla']}",
+                callback_data=f"select_{c['id']}"
+            )
+        ])
+    buttons.append([
+        InlineKeyboardButton(text="📊 Natijalar", callback_data="results")
+    ])
+    
+    await bot.send_message(
+        chat_id=channel,
+        text="🗳 *SHOFIRKON TUMANI ENG YAXSHI YOSHLAR YETAKCHISI*\n\n"
+             "Hurmatli ishtirokchilar! Quyidan o'z mahallangiz yetakchisiga ovoz bering!\n\n"
+             "👇 Nomzodni tanlang:",
+        parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons)
+    )
+    await message.answer("✅ Post kanalga yuborildi!")
 # ─── Ishga tushirish ──────────────────────────────────
 
 async def main():
