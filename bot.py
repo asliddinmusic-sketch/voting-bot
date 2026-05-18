@@ -267,6 +267,35 @@ async def cmd_reset(message: Message):
 async def cmd_sendpoll(message: Message):
     if message.from_user.id not in ADMIN_IDS:
         return
+
+    channel = "@YIA_Shofirkon_tumani"
+
+    caption = (
+        "🟥 *2026 YIL ENG FAOL MAHALLA YOSHLAR YETAKCHISI*\n\n"
+        "Joriy yilda yoshlar bilan ishlashda eng samarali natijalarga erishgan, "
+        "tashabbuslarni amaliy loyihalarga aylantirgan hamda mahallalarda yoshlar "
+        "faolligini oshirgan yetakchilar orasidan eng munosibini aniqlash bo'yicha "
+        "so'rovnoma boshlandi.\n\n"
+        "📅 So'rovnoma *10 kun* davom etadi\n\n"
+        "🗳 Sizning ovozingiz yakuniy natijani belgilaydi\n\n"
+        "✊ Eng munosib nomzodni qo'llab-quvvatlang!"
+    )
+
+    markup = InlineKeyboardMarkup(inline_keyboard=[[
+        InlineKeyboardButton(
+            text="🗳 Ovoz berish",
+            url="https://t.me/shofirkon_sorovnoma_bot"
+        )
+    ]])
+
+    await bot.send_photo(
+        chat_id=channel,
+        photo="https://raw.githubusercontent.com/asliddinmusic-sketch/voting-bot/main/banner.png",
+        caption=caption,
+        parse_mode="Markdown",
+        reply_markup=markup
+    )
+    await message.answer("✅ Post kanalga yuborildi!")
     
     channel = "@YIA_Shofirkon_tumani"
     
