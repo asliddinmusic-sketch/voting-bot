@@ -1,0 +1,274 @@
+import asyncio
+import logging
+from aiogram import Bot, Dispatcher, F
+from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.filters import CommandStart, Command
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
+from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.exceptions import TelegramBadRequest
+
+from config import BOT_TOKEN, CHANNELS, CANDIDATES, ADMIN_IDS
+from database import db
+
+logging.basicConfig(level=logging.INFO)
+bot = Bot(token=BOT_TOKEN)
+dp = Dispatcher(storage=MemoryStorage())
+
+class VoteState(StatesGroup):
+    choosing = State()      # nomzod tanlayapti
+    subscribing = State()   # obuna bo'layapti
+
+
+# ─── Yordamchi funksiyalar ───────────────────────────
+
+async def check_subscriptions(user_id: int) -> list:
+    not_joined = []
+    for ch in CHANNELS:
+        try:
+            member = await bot.get_chat_member(ch["id"], user_id)
+            if member.status in ("left", "kicked", "banned"):
+                not_joined.append(ch)
+        except TelegramBadRequest:
+            not_joined.append(ch)
+    return not_joined
+
+
+def candidates_page_keyboard(page: int = 0) -> InlineKeyboardMarkup:
+    """Sahifalangan nomzodlar (10 tadan)"""
+    per_page = 10
+    start = page * per_page
+    end = start + per_page
+    page_candidates = CANDIDATES[start:end]
+    total_pages = (len(CANDIDATES) + per_page - 1) // per_page
+
+    buttons = []
+    for c in page_candidates:
+        buttons.append([
+            InlineKeyboardButton(
+                text=f"{c['name']} | {c['mahalla']}",
+                callback_data=f"select_{c['id']}"
+            )
+        ])
+
+    nav = []
+    if page > 0:
+        nav.append(InlineKeyboardButton(text="⬅️ Oldingi", callback_data=f"page_{page-1}"))
+    if page < total_pages - 1:
+        nav.append(InlineKeyboardButton(text="Keyingi ➡️", callback_data=f"page_{page+1}"))
+    if nav:
+        buttons.append(nav)
+
+    buttons.append([
+        InlineKeyboardButton(text="📊 Natijalar", callback_data="results")
+    ])
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+def subscribe_keyboard(not_joined: list, candidate_id: int) -> InlineKeyboardMarkup:
+    buttons = []
+    for ch in not_joined:
+        buttons.append([
+            InlineKeyboardButton(text=f"📢 {ch['name']}", url=ch["invite_link"])
+        ])
+    buttons.append([
+        InlineKeyboardButton(
+            text="✅ Obuna bo'ldim, tekshiring!",
+            callback_data=f"confirm_{candidate_id}"
+        )
+    ])
+    buttons.append([
+        InlineKeyboardButton(text="🔙 Nomzodlarga qaytish", callback_data="page_0")
+    ])
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+def results_text() -> str:
+    votes = db.get_all_votes()
+    total = sum(votes.values()) or 1
+    lines = ["📊 *Joriy natijalar:*\n"]
+    sorted_c = sorted(CANDIDATES, key=lambda c: votes.get(c["id"], 0), reverse=True)
+    for i, c in enumerate(sorted_c[:10]):
+        v = votes.get(c["id"], 0)
+        pct = round(v / total * 100)
+        bar = "█" * (pct // 5) + "░" * (20 - pct // 5)
+        medal = ["🥇", "🥈", "🥉"][i] if i < 3 else f"{i+1}."
+        lines.append(f"{medal} *{c['name']}*")
+        lines.append(f"_{c['mahalla']}_")
+        lines.append(f"`{bar}` {pct}% ({v} ovoz)\n")
+    lines.append(f"👥 Jami ishtirokchilar: *{db.count_voters()}* ta")
+    return "\n".join(lines)
+
+
+# ─── /start ──────────────────────────────────────────
+
+@dp.message(CommandStart())
+async def cmd_start(message: Message, state: FSMContext):
+    await state.clear()
+    user_id = message.from_user.id
+    name = message.from_user.full_name
+
+    if db.has_voted(user_id):
+        voted_id = db.get_user_vote(user_id)
+        c = next((x for x in CANDIDATES if x["id"] == voted_id), None)
+        await message.answer(
+            f"✅ *{name}*, siz allaqachon ovoz bergansiz!\n\n"
+            f"Tanlovingiz: *{c['name'] if c else '—'}*\n"
+            f"_{c['mahalla'] if c else ''}_\n\n"
+            + results_text(),
+            parse_mode="Markdown"
+        )
+        return
+
+    await state.set_state(VoteState.choosing)
+    await message.answer(
+        f"🗳 *Salom, {name}!*\n\n"
+        f"Shofirkon tumani *eng yaxshi yoshlar yetakchisi* so'rovnomasiga xush kelibsiz!\n\n"
+        f"👇 Quyidan ovoz bermoqchi bo'lgan nomzodni tanlang:",
+        parse_mode="Markdown",
+        reply_markup=candidates_page_keyboard(0)
+    )
+
+
+# ─── Sahifa almashtirish ──────────────────────────────
+
+@dp.callback_query(F.data.startswith("page_"))
+async def page_callback(call: CallbackQuery, state: FSMContext):
+    page = int(call.data.split("_")[1])
+    await state.set_state(VoteState.choosing)
+    try:
+        await call.message.edit_text(
+            "👇 Ovoz bermoqchi bo'lgan nomzodni tanlang:",
+            reply_markup=candidates_page_keyboard(page)
+        )
+    except TelegramBadRequest:
+        pass
+    await call.answer()
+
+
+# ─── Nomzod tanlash ───────────────────────────────────
+
+@dp.callback_query(F.data.startswith("select_"))
+async def select_candidate(call: CallbackQuery, state: FSMContext):
+    user_id = call.from_user.id
+
+    if db.has_voted(user_id):
+        await call.answer("❌ Siz allaqachon ovoz bergansiz!", show_alert=True)
+        return
+
+    candidate_id = int(call.data.split("_")[1])
+    c = next((x for x in CANDIDATES if x["id"] == candidate_id), None)
+    if not c:
+        await call.answer("Xatolik!", show_alert=True)
+        return
+
+    not_joined = await check_subscriptions(user_id)
+
+    if not not_joined:
+        # Obuna to'liq — darhol ovoz beriladi
+        db.save_vote(user_id, candidate_id)
+        await call.message.edit_text(
+            f"✅ *Ovozingiz qabul qilindi!*\n\n"
+            f"Siz *{c['name']}* ga ovoz berdingiz\n"
+            f"_{c['mahalla']}_\n\n"
+            + results_text(),
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
+                InlineKeyboardButton(text="🔄 Natijalarni yangilash", callback_data="results")
+            ]])
+        )
+        await call.answer("✅ Ovoz saqlandi!")
+    else:
+        # Avval obuna bo'lishi kerak
+        await state.set_state(VoteState.subscribing)
+        await state.update_data(pending_candidate=candidate_id)
+        await call.message.edit_text(
+            f"👍 Tanlovingiz: *{c['name']}*\n"
+            f"_{c['mahalla']}_\n\n"
+            f"⚠️ Ovoz berish uchun avval quyidagi kanallarga obuna bo'ling:\n",
+            parse_mode="Markdown",
+            reply_markup=subscribe_keyboard(not_joined, candidate_id)
+        )
+        await call.answer()
+
+
+# ─── Obunani tasdiqlash ───────────────────────────────
+
+@dp.callback_query(F.data.startswith("confirm_"))
+async def confirm_vote(call: CallbackQuery, state: FSMContext):
+    user_id = call.from_user.id
+
+    if db.has_voted(user_id):
+        await call.answer("❌ Siz allaqachon ovoz bergansiz!", show_alert=True)
+        return
+
+    candidate_id = int(call.data.split("_")[1])
+    not_joined = await check_subscriptions(user_id)
+
+    if not_joined:
+        await call.answer("❌ Hali barcha kanallarga obuna bo'lmadingiz!", show_alert=True)
+        await call.message.edit_reply_markup(
+            reply_markup=subscribe_keyboard(not_joined, candidate_id)
+        )
+        return
+
+    c = next((x for x in CANDIDATES if x["id"] == candidate_id), None)
+    db.save_vote(user_id, candidate_id)
+    await state.clear()
+
+    await call.message.edit_text(
+        f"✅ *Ovozingiz qabul qilindi!*\n\n"
+        f"Siz *{c['name']}* ga ovoz berdingiz\n"
+        f"_{c['mahalla']}_\n\n"
+        + results_text(),
+        parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
+            InlineKeyboardButton(text="🔄 Natijalarni yangilash", callback_data="results")
+        ]])
+    )
+    await call.answer("✅ Ovoz saqlandi!")
+
+
+# ─── Natijalar ────────────────────────────────────────
+
+@dp.callback_query(F.data == "results")
+async def show_results(call: CallbackQuery):
+    user_id = call.from_user.id
+    if db.has_voted(user_id):
+        markup = InlineKeyboardMarkup(inline_keyboard=[[
+            InlineKeyboardButton(text="🔄 Yangilash", callback_data="results")
+        ]])
+    else:
+        markup = candidates_page_keyboard(0)
+    try:
+        await call.message.edit_text(results_text(), parse_mode="Markdown", reply_markup=markup)
+    except TelegramBadRequest:
+        pass
+    await call.answer()
+
+
+# ─── Admin komandalar ─────────────────────────────────
+
+@dp.message(Command("stats"))
+async def cmd_stats(message: Message):
+    if message.from_user.id not in ADMIN_IDS:
+        return
+    await message.answer(results_text(), parse_mode="Markdown")
+
+
+@dp.message(Command("reset"))
+async def cmd_reset(message: Message):
+    if message.from_user.id not in ADMIN_IDS:
+        return
+    db.reset_votes()
+    await message.answer("✅ Barcha ovozlar o'chirildi.")
+
+
+# ─── Ishga tushirish ──────────────────────────────────
+
+async def main():
+    print("🤖 Bot ishga tushdi!")
+    await dp.start_polling(bot)
+
+if __name__ == "__main__":
+    asyncio.run(main())
