@@ -303,7 +303,7 @@ async def cmd_sendpoll(message: Message):
             )
         ])
     markup = InlineKeyboardMarkup(inline_keyboard=buttons)
-    )
+    
     await message.answer("✅ Post kanalga yuborildi!")
 
 
