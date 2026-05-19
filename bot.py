@@ -310,7 +310,7 @@ async def cmd_sendpoll(message: Message):
     markup = InlineKeyboardMarkup(inline_keyboard=buttons)
     await bot.send_photo(
         chat_id=channel,
-        photo="https://raw.githubusercontent.com/asliddinmusic-sketch/voting-bot/main/banner.png",
+        photo="https://raw.githubusercontent.com/asliddinmusic-sketch/voting-bot/main/banner%20(2).png",
         caption=caption,
         parse_mode="Markdown",
         reply_markup=markup
