@@ -103,6 +103,35 @@ async def cmd_start(message: Message, state: FSMContext):
     user_id = message.from_user.id
     name = message.from_user.full_name
 
+    # vote_ parametrini tekshirish
+    args = message.text.split()
+    if len(args) > 1 and args[1].startswith("vote_"):
+        candidate_id = int(args[1].split("_")[1])
+        c = next((x for x in CANDIDATES if x["id"] == candidate_id), None)
+        if c:
+            if db.has_voted(user_id):
+                await message.answer("❌ Siz allaqachon ovoz bergansiz!")
+                return
+            not_joined = await check_subscriptions(user_id)
+            if not not_joined:
+                db.save_vote(user_id, candidate_id)
+                await message.answer(
+                    f"✅ *Ovozingiz qabul qilindi!*\n\n"
+                    f"Siz *{c['name']}* ga ovoz berdingiz\n"
+                    f"_{c['mahalla']}_\n\n"
+                    + results_text(),
+                    parse_mode="Markdown"
+                )
+            else:
+                await message.answer(
+                    f"👍 Tanlovingiz: *{c['name']}*\n"
+                    f"_{c['mahalla']}_\n\n"
+                    f"⚠️ Ovoz berish uchun avval quyidagi kanallarga obuna bo'ling:\n",
+                    parse_mode="Markdown",
+                    reply_markup=subscribe_keyboard(not_joined, candidate_id)
+                )
+            return
+
     if db.has_voted(user_id):
         voted_id = db.get_user_vote(user_id)
         c = next((x for x in CANDIDATES if x["id"] == voted_id), None)
