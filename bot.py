@@ -16,11 +16,9 @@ bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
 
 class VoteState(StatesGroup):
-    choosing = State()      # nomzod tanlayapti
-    subscribing = State()   # obuna bo'layapti
+    choosing = State()
+    subscribing = State()
 
-
-# ─── Yordamchi funksiyalar ───────────────────────────
 
 async def check_subscriptions(user_id: int) -> list:
     not_joined = []
@@ -35,7 +33,6 @@ async def check_subscriptions(user_id: int) -> list:
 
 
 def candidates_page_keyboard(page: int = 0) -> InlineKeyboardMarkup:
-    """Sahifalangan nomzodlar (10 tadan)"""
     per_page = 10
     start = page * per_page
     end = start + per_page
@@ -100,8 +97,6 @@ def results_text() -> str:
     return "\n".join(lines)
 
 
-# ─── /start ──────────────────────────────────────────
-
 @dp.message(CommandStart())
 async def cmd_start(message: Message, state: FSMContext):
     await state.clear()
@@ -130,8 +125,6 @@ async def cmd_start(message: Message, state: FSMContext):
     )
 
 
-# ─── Sahifa almashtirish ──────────────────────────────
-
 @dp.callback_query(F.data.startswith("page_"))
 async def page_callback(call: CallbackQuery, state: FSMContext):
     page = int(call.data.split("_")[1])
@@ -145,8 +138,6 @@ async def page_callback(call: CallbackQuery, state: FSMContext):
         pass
     await call.answer()
 
-
-# ─── Nomzod tanlash ───────────────────────────────────
 
 @dp.callback_query(F.data.startswith("select_"))
 async def select_candidate(call: CallbackQuery, state: FSMContext):
@@ -165,7 +156,6 @@ async def select_candidate(call: CallbackQuery, state: FSMContext):
     not_joined = await check_subscriptions(user_id)
 
     if not not_joined:
-        # Obuna to'liq — darhol ovoz beriladi
         db.save_vote(user_id, candidate_id)
         await call.message.edit_text(
             f"✅ *Ovozingiz qabul qilindi!*\n\n"
@@ -179,7 +169,6 @@ async def select_candidate(call: CallbackQuery, state: FSMContext):
         )
         await call.answer("✅ Ovoz saqlandi!")
     else:
-        # Avval obuna bo'lishi kerak
         await state.set_state(VoteState.subscribing)
         await state.update_data(pending_candidate=candidate_id)
         await call.message.edit_text(
@@ -191,8 +180,6 @@ async def select_candidate(call: CallbackQuery, state: FSMContext):
         )
         await call.answer()
 
-
-# ─── Obunani tasdiqlash ───────────────────────────────
 
 @dp.callback_query(F.data.startswith("confirm_"))
 async def confirm_vote(call: CallbackQuery, state: FSMContext):
@@ -229,8 +216,6 @@ async def confirm_vote(call: CallbackQuery, state: FSMContext):
     await call.answer("✅ Ovoz saqlandi!")
 
 
-# ─── Natijalar ────────────────────────────────────────
-
 @dp.callback_query(F.data == "results")
 async def show_results(call: CallbackQuery):
     user_id = call.from_user.id
@@ -247,8 +232,6 @@ async def show_results(call: CallbackQuery):
     await call.answer()
 
 
-# ─── Admin komandalar ─────────────────────────────────
-
 @dp.message(Command("stats"))
 async def cmd_stats(message: Message):
     if message.from_user.id not in ADMIN_IDS:
@@ -262,6 +245,7 @@ async def cmd_reset(message: Message):
         return
     db.reset_votes()
     await message.answer("✅ Barcha ovozlar o'chirildi.")
+
 
 @dp.message(Command("sendpoll"))
 async def cmd_sendpoll(message: Message):
@@ -281,16 +265,15 @@ async def cmd_sendpoll(message: Message):
         "✊ Eng munosib nomzodni qo'llab-quvvatlang!"
     )
 
-buttons = []
-        for c in CANDIDATES:
-            buttons.append([
-                InlineKeyboardButton(
-                    text=f"{c['name']} | {c['mahalla']}",
-                    callback_data=f"select_{c['id']}"
-                )
-            ])
-        markup = InlineKeyboardMarkup(inline_keyboard=buttons)
-markup = InlineKeyboardMarkup(inline_keyboard=buttons)
+    buttons = []
+    for c in CANDIDATES:
+        buttons.append([
+            InlineKeyboardButton(
+                text=f"{c['name']} | {c['mahalla']}",
+                callback_data=f"select_{c['id']}"
+            )
+        ])
+    markup = InlineKeyboardMarkup(inline_keyboard=buttons)
 
     await bot.send_photo(
         chat_id=channel,
@@ -300,31 +283,7 @@ markup = InlineKeyboardMarkup(inline_keyboard=buttons)
         reply_markup=markup
     )
     await message.answer("✅ Post kanalga yuborildi!")
-    
-    channel = "@YIA_Shofirkon_tumani"
-    
-    buttons = []
-    for c in CANDIDATES:
-        buttons.append([
-            InlineKeyboardButton(
-                text=f"{c['name']} | {c['mahalla']}",
-                callback_data=f"select_{c['id']}"
-            )
-        ])
-    buttons.append([
-        InlineKeyboardButton(text="📊 Natijalar", callback_data="results")
-    ])
-    
-    await bot.send_message(
-        chat_id=channel,
-        text="🗳 *SHOFIRKON TUMANI ENG YAXSHI YOSHLAR YETAKCHISI*\n\n"
-             "Hurmatli ishtirokchilar! Quyidan o'z mahallangiz yetakchisiga ovoz bering!\n\n"
-             "👇 Nomzodni tanlang:",
-        parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons)
-    )
-    await message.answer("✅ Post kanalga yuborildi!")
-# ─── Ishga tushirish ──────────────────────────────────
+
 
 async def main():
     print("🤖 Bot ishga tushdi!")
