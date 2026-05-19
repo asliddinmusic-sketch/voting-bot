@@ -281,12 +281,15 @@ async def cmd_sendpoll(message: Message):
         "✊ Eng munosib nomzodni qo'llab-quvvatlang!"
     )
 
-    markup = InlineKeyboardMarkup(inline_keyboard=[[
+ buttons = []
+for c in CANDIDATES:
+    buttons.append([
         InlineKeyboardButton(
-            text="🗳 Ovoz berish",
-            url="https://t.me/shofirkon_sorovnoma_bot"
+            text=f"{c['name']} | {c['mahalla']}",
+            callback_data=f"select_{c['id']}"
         )
-    ]])
+    ])
+markup = InlineKeyboardMarkup(inline_keyboard=buttons)
 
     await bot.send_photo(
         chat_id=channel,
