@@ -44,7 +44,7 @@ CANDIDATES = [
     {"id": 25, "name": "Yusupova Umida Roziqovna",            "mahalla": "25-umumiy o'rta ta'lim maktabi"},
     {"id": 26, "name": "Qudratov Ne'mat Sunnatovich",         "mahalla": "26-umumiy o'rta ta'lim maktabi"},
     {"id": 27, "name": "Abdullayev Nutfullo Nasullayevich",   "mahalla": "27-umumiy o'rta ta'lim maktabi"},
-    {"id": 28, "name": "Rahmonov Zafar Jabborovich",          "mahalla": "28-umumiy o'rta ta'lim maktabi"},
+    {"id": 28, "name": "Rahmonov Zafar Jafarovich",           "mahalla": "28-umumiy o'rta ta'lim maktabi"},
     {"id": 29, "name": "Jumayev Oybek Savriddinovich",        "mahalla": "29-umumiy o'rta ta'lim maktabi"},
     {"id": 30, "name": "Sharipov Botir Sulton o'g'li",        "mahalla": "30-umumiy o'rta ta'lim maktabi"},
     {"id": 31, "name": "Norqulova Ozoda Mansurovna",          "mahalla": "31-umumiy o'rta ta'lim maktabi"},
