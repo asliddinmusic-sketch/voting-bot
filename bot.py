@@ -284,14 +284,19 @@ async def cmd_sendpoll(message: Message):
     channel = "@YIA_Shofirkon_tumani"
 
     caption = (
-        "🟥 *2026 YIL ENG FAOL MAHALLA YOSHLAR YETAKCHISI*\n\n"
-        "Joriy yilda yoshlar bilan ishlashda eng samarali natijalarga erishgan, "
-        "tashabbuslarni amaliy loyihalarga aylantirgan hamda mahallalarda yoshlar "
-        "faolligini oshirgan yetakchilar orasidan eng munosibini aniqlash bo'yicha "
-        "so'rovnoma boshlandi.\n\n"
-        "📅 So'rovnoma *10 kun* davom etadi\n\n"
-        "🗳 Sizning ovozingiz yakuniy natijani belgilaydi\n\n"
-        "✊ Eng munosib nomzodni qo'llab-quvvatlang!"
+        #Shofirkon_tumani
+
+🏫 Shofirkonda umumta'lim maktablari o'rtasida "Eng faol va tashabbuskor maktab direktori" onlayn tanlovi!
+
+📚 Yoshlar ishlari Shofirkon tuman bo'limi hamda Shofirkon tuman maktabgacha va maktab ta'limi bo'limi tomonidan jamoatchilik so'rovnomasi o'tkazilmoqda.
+
+⭐ So'rovnoma orqali 2025–2026 o'quv yilidagi maktablar faoliyati, direktorlarning tashabbuskorligi va samaradorligi baholanadi.
+
+👨‍🏫 Sizningcha, Shofirkon tumanidagi qaysi maktab direktori eng faol va tashabbuskor?
+
+🎁 Eng yuqori natija qayd etgan maktab direktori tashakkurnoma va qimmatbaho sovg'alar bilan taqdirlanadi!
+
+📅 So'rovnoma tugash muddati: 2026-yil 25-may soat 23:59
     )
 
     buttons = []
