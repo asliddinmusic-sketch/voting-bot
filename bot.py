@@ -51,14 +51,14 @@ def candidates_page_keyboard(page: int = 0) -> InlineKeyboardMarkup:
 
     nav = []
     if page > 0:
-        nav.append(InlineKeyboardButton(text="Oldingi", callback_data=f"page_{page-1}"))
+        nav.append(InlineKeyboardButton(text="⬅️ Oldingi", callback_data=f"page_{page-1}"))
     if page < total_pages - 1:
-        nav.append(InlineKeyboardButton(text="Keyingi", callback_data=f"page_{page+1}"))
+        nav.append(InlineKeyboardButton(text="Keyingi ➡️", callback_data=f"page_{page+1}"))
     if nav:
         buttons.append(nav)
 
     buttons.append([
-        InlineKeyboardButton(text="Natijalar", callback_data="results")
+        InlineKeyboardButton(text="📊 Natijalar", callback_data="results")
     ])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
