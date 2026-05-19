@@ -286,15 +286,15 @@ async def cmd_sendpoll(message: Message):
     caption = (
         #Shofirkon_tumani
 
-🏫 Shofirkonda umumta'lim maktablari o'rtasida "Eng faol va tashabbuskor maktab direktori" onlayn tanlovi!
+ Shofirkonda umumta'lim maktablari o'rtasida "Eng faol va tashabbuskor maktab direktori" onlayn tanlovi!
 
-📚 Yoshlar ishlari Shofirkon tuman bo'limi hamda Shofirkon tuman maktabgacha va maktab ta'limi bo'limi tomonidan jamoatchilik so'rovnomasi o'tkazilmoqda.
+ Yoshlar ishlari Shofirkon tuman bo'limi hamda Shofirkon tuman maktabgacha va maktab ta'limi bo'limi tomonidan jamoatchilik so'rovnomasi o'tkazilmoqda.
 
-⭐ So'rovnoma orqali 2025–2026 o'quv yilidagi maktablar faoliyati, direktorlarning tashabbuskorligi va samaradorligi baholanadi.
+ So'rovnoma orqali 2025–2026 o'quv yilidagi maktablar faoliyati, direktorlarning tashabbuskorligi va samaradorligi baholanadi.
 
-👨‍🏫 Sizningcha, Shofirkon tumanidagi qaysi maktab direktori eng faol va tashabbuskor?
+ Sizningcha, Shofirkon tumanidagi qaysi maktab direktori eng faol va tashabbuskor?
 
-🎁 Eng yuqori natija qayd etgan maktab direktori tashakkurnoma va qimmatbaho sovg'alar bilan taqdirlanadi!
+ Eng yuqori natija qayd etgan maktab direktori tashakkurnoma va qimmatbaho sovg'alar bilan taqdirlanadi!
 
 📅 So'rovnoma tugash muddati: 2026-yil 25-may soat 23:59
     )
