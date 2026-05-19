@@ -303,7 +303,13 @@ async def cmd_sendpoll(message: Message):
             )
         ])
     markup = InlineKeyboardMarkup(inline_keyboard=buttons)
-    
+    await bot.send_photo(
+        chat_id=channel,
+        photo="https://raw.githubusercontent.com/asliddinmusic-sketch/voting-bot/main/banner.png",
+        caption=caption,
+        parse_mode="Markdown",
+        reply_markup=markup
+    )
     await message.answer("✅ Post kanalga yuborildi!")
 
 
