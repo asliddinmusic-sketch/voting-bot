@@ -270,17 +270,10 @@ async def cmd_sendpoll(message: Message):
         buttons.append([
             InlineKeyboardButton(
                 text=f"{c['name']} | {c['mahalla']}",
-                callback_data=f"select_{c['id']}"
+                url=f"https://t.me/shofirkon_sorovnoma_bot?start=vote_{c['id']}"
             )
         ])
     markup = InlineKeyboardMarkup(inline_keyboard=buttons)
-
-    await bot.send_photo(
-        chat_id=channel,
-        photo="https://raw.githubusercontent.com/asliddinmusic-sketch/voting-bot/main/banner.png",
-        caption=caption,
-        parse_mode="Markdown",
-        reply_markup=markup
     )
     await message.answer("✅ Post kanalga yuborildi!")
 
