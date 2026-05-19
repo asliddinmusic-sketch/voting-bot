@@ -283,7 +283,7 @@ async def cmd_sendpoll(message: Message):
 
     channel = "@YIA_Shofirkon_tumani"
 
-   caption = (
+    caption = (
         "#Shofirkon_tumani\n\n"
         "Shofirkonda umumta'lim maktablari o'rtasida 'Eng faol va tashabbuskor maktab direktori' onlayn tanlovi!\n\n"
         "Yoshlar ishlari Shofirkon tuman bo'limi hamda Shofirkon tuman maktabgacha va maktab ta'limi bo'limi "
