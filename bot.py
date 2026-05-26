@@ -180,7 +180,7 @@ async def page_callback(call: CallbackQuery, state: FSMContext):
 @dp.callback_query(F.data.startswith("select_"))
 async def select_candidate(call: CallbackQuery, state: FSMContext):
     user_id = call.from_user.id
- if not is_poll_active():
+  if not is_poll_active():
             await call.answer("So'rovnoma tugadi!", show_alert=True)
             return
     if db.has_voted(user_id):
