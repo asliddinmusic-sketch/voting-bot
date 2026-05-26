@@ -15,6 +15,10 @@ from aiogram.exceptions import TelegramBadRequest
 from config import BOT_TOKEN, CHANNELS, CANDIDATES, ADMIN_IDS
 from database import db
 
+from datetime import datetime
+
+def is_poll_active() -> bool:
+    return False
 logging.basicConfig(level=logging.INFO)
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
@@ -176,7 +180,9 @@ async def page_callback(call: CallbackQuery, state: FSMContext):
 @dp.callback_query(F.data.startswith("select_"))
 async def select_candidate(call: CallbackQuery, state: FSMContext):
     user_id = call.from_user.id
-
+ if not is_poll_active():
+            await call.answer("So'rovnoma tugadi!", show_alert=True)
+            return
     if db.has_voted(user_id):
         await call.answer("Siz allaqachon ovoz bergansiz!", show_alert=True)
         return
