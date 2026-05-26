@@ -1,9 +1,6 @@
 import asyncio
-from datetime import datetime
-
-def is_poll_active() -> bool:
-    return False
 import logging
+from datetime import datetime
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.filters import CommandStart, Command
@@ -15,13 +12,13 @@ from aiogram.exceptions import TelegramBadRequest
 from config import BOT_TOKEN, CHANNELS, CANDIDATES, ADMIN_IDS
 from database import db
 
-from datetime import datetime
-
-def is_poll_active() -> bool:
-    return False
 logging.basicConfig(level=logging.INFO)
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
+
+
+def is_poll_active() -> bool:
+    return False
 
 
 class VoteState(StatesGroup):
@@ -59,14 +56,14 @@ def candidates_page_keyboard(page: int = 0) -> InlineKeyboardMarkup:
 
     nav = []
     if page > 0:
-        nav.append(InlineKeyboardButton(text="⬅️ Oldingi", callback_data=f"page_{page-1}"))
+        nav.append(InlineKeyboardButton(text="Oldingi", callback_data=f"page_{page-1}"))
     if page < total_pages - 1:
-        nav.append(InlineKeyboardButton(text="Keyingi ➡️", callback_data=f"page_{page+1}"))
+        nav.append(InlineKeyboardButton(text="Keyingi", callback_data=f"page_{page+1}"))
     if nav:
         buttons.append(nav)
 
     buttons.append([
-        InlineKeyboardButton(text="📊 Natijalar", callback_data="results")
+        InlineKeyboardButton(text="Natijalar", callback_data="results")
     ])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
@@ -94,12 +91,11 @@ def results_text() -> str:
     total = sum(votes.values()) or 1
     lines = ["Joriy natijalar:\n"]
     sorted_c = sorted(CANDIDATES, key=lambda c: votes.get(c["id"], 0), reverse=True)
-    for i, c in enumerate(sorted_c[:10]):
+    for i, c in enumerate(sorted_c):
         v = votes.get(c["id"], 0)
         pct = round(v / total * 100)
         bar = "=" * (pct // 5) + "-" * (20 - pct // 5)
-        medal = ["1.", "2.", "3."][i] if i < 3 else f"{i+1}."
-        lines.append(f"{medal} {c['name']}")
+        lines.append(f"{i+1}. {c['name']}")
         lines.append(f"   {c['mahalla']}")
         lines.append(f"   [{bar}] {pct}% ({v} ovoz)\n")
     lines.append(f"Jami ishtirokchilar: {db.count_voters()} ta")
@@ -114,6 +110,9 @@ async def cmd_start(message: Message, state: FSMContext):
 
     args = message.text.split()
     if len(args) > 1 and args[1].startswith("vote_"):
+        if not is_poll_active():
+            await message.answer("So'rovnoma tugadi!")
+            return
         try:
             candidate_id = int(args[1].split("_")[1])
         except Exception:
@@ -154,6 +153,12 @@ async def cmd_start(message: Message, state: FSMContext):
         )
         return
 
+    if not is_poll_active():
+        await message.answer(
+            "So'rovnoma tugadi!\n\n" + results_text()
+        )
+        return
+
     await state.set_state(VoteState.choosing)
     await message.answer(
         f"Salom, {name}!\n\n"
@@ -180,9 +185,11 @@ async def page_callback(call: CallbackQuery, state: FSMContext):
 @dp.callback_query(F.data.startswith("select_"))
 async def select_candidate(call: CallbackQuery, state: FSMContext):
     user_id = call.from_user.id
-  if not is_poll_active():
-            await call.answer("So'rovnoma tugadi!", show_alert=True)
-            return
+
+    if not is_poll_active():
+        await call.answer("So'rovnoma tugadi!", show_alert=True)
+        return
+
     if db.has_voted(user_id):
         await call.answer("Siz allaqachon ovoz bergansiz!", show_alert=True)
         return
@@ -223,6 +230,10 @@ async def select_candidate(call: CallbackQuery, state: FSMContext):
 async def confirm_vote(call: CallbackQuery, state: FSMContext):
     user_id = call.from_user.id
 
+    if not is_poll_active():
+        await call.answer("So'rovnoma tugadi!", show_alert=True)
+        return
+
     if db.has_voted(user_id):
         await call.answer("Siz allaqachon ovoz bergansiz!", show_alert=True)
         return
@@ -256,6 +267,19 @@ async def confirm_vote(call: CallbackQuery, state: FSMContext):
 @dp.callback_query(F.data == "results")
 async def show_results(call: CallbackQuery):
     user_id = call.from_user.id
+
+    not_joined = await check_subscriptions(user_id)
+    if not_joined:
+        await call.answer("Natijalarni ko'rish uchun kanallarga obuna bo'ling!", show_alert=True)
+        await call.message.edit_text(
+            "Natijalarni ko'rish uchun avval kanallarga obuna bo'ling:",
+            reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                *[[InlineKeyboardButton(text=ch['name'], url=ch["invite_link"])] for ch in not_joined],
+                [InlineKeyboardButton(text="Tekshirish", callback_data="results")]
+            ])
+        )
+        return
+
     if db.has_voted(user_id):
         markup = InlineKeyboardMarkup(inline_keyboard=[[
             InlineKeyboardButton(text="Yangilash", callback_data="results")
