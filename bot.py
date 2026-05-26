@@ -1,4 +1,8 @@
 import asyncio
+from datetime import datetime
+
+def is_poll_active() -> bool:
+    return False
 import logging
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
