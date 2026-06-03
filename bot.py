@@ -294,9 +294,14 @@ async def cmd_sendpoll(message: Message):
     channel = "@YIA_Shofirkon_tumani"
 
     caption = (
-        "#Shofirkon_tumani\n\n"
-        "Yoshlar kunida qaysi san'atkorni Shofirkonga taklif qilishimizni xohlaysiz?\n\n"
-        "Quyidagi nomzodlardan birini tanlang va ovoz bering!\n\n"
+        "Yoshlar kuni munosabati bilan!\n\n"
+        "Qaysi san'atkorni Shofirkonda ko'rishni xohlaysiz?\n\n"
+        "Sizning fikringiz biz uchun muhim! Yoshlar kuniga bag'ishlangan "
+        "bayram dasturida qaysi san'atkor ishtirok etishini birgalikda tanlaymiz.\n\n"
+        "Ovoz bering va o'z tanlovingizni belgilang!\n\n"
+        "Rasmdagi san'atkorlardan biriga ovoz bering\n\n"
+        "Eng faol va eng ko'p ovoz to'plagan nomzodlar ko'rib chiqiladi.\n\n"
+        "Do'stlaringizga ham ulashing va ovoz berishda ishtirok eting!\n\n"
         "So'rovnoma tugash muddati: 2026-yil 6-iyun soat 23:59"
     )
 
